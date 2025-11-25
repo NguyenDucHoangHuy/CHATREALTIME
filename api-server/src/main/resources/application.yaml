@@ -1,0 +1,21 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3307/chatapp"
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+application:
+  jwt:
+    secretKey: ${SECRET_KEY_CHATREALTIME}
+    # Thời gian hết hạn Access Token (ví dụ: 15 phút)
+    # Tính bằng mili-giây: 15 * 60 * 1000 = 900000
+    access-token-expiration: 900000
+
+    # Thời gian hết hạn Refresh Token (ví dụ: 7 ngày)
+    # Tính bằng mili-giây: 7 * 24 * 60 * 60 * 1000 = 604800000
+    refresh-token-expiration: 604800000
