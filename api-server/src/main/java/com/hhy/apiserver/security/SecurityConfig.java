@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,6 +12,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration // Đánh dấu đây là file Cấu hình
 @EnableWebSecurity // Kích hoạt Spring Security
@@ -29,7 +35,7 @@ public class SecurityConfig {
         // 3. Vô hiệu hóa CSRF (Cross-Site Request Forgery)
         // Chúng ta dùng JWT (stateless), nên không cần CSRF.
         http.csrf(AbstractHttpConfigurer::disable);
-
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         // 4. CẤU HÌNH CÁC ĐƯỜNG DẪN (Authorization Rules)
         http.authorizeHttpRequests(auth -> auth
                 // 4a. Cho phép (permitAll) tất cả các API trong /api/auth/**
@@ -66,5 +72,24 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 1. Dùng Pattern "*" thay vì Origin "*" để linh hoạt hơn
+        // Nó cho phép MỌI IP, MỌI Port gọi vào
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // Cho phép các method
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // Cho phép các header (đặc biệt là Authorization)
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // Đăng ký cấu hình này cho mọi endpoint
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

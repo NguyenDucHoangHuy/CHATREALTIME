@@ -222,8 +222,9 @@ public class WsClientHandler implements Runnable {
             payload.setMessageId(messageId);
             payload.setContent(content);
             payload.setMessageType(type);
-            // Thêm senderId để client biết ai gửi
-            // payload.setSenderId(this.currentUserId);
+
+            payload.setSenderId(this.currentUserId);
+
             response.setData(payload);
 
             String jsonResp = gson.toJson(response);

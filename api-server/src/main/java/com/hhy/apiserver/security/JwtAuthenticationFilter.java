@@ -1,5 +1,6 @@
 package com.hhy.apiserver.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        try{
         // 3. Nếu có, tách lấy phần token (bỏ "Bearer")
         final String jwt = authHeader.substring(7); // "Bearer ".length() == 7
 
@@ -79,6 +81,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 11. Cho request đi tiếp đến Filter tiếp theo (hoặc Controller)
         filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            // 🛑 3. BẮT LỖI TOKEN HẾT HẠN TẠI ĐÂY
+            // Thay vì để server nổ lỗi 500, ta trả về 401 để Frontend biết đường refresh
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+            response.setContentType("application/json");
+            response.getWriter().write("{\"code\": 401, \"message\": \"Token expired\"}");
+            // return luôn, KHÔNG gọi filterChain.doFilter nữa
+            return;
+
+        } catch (Exception e) {
+            // Các lỗi JWT khác (sai chữ ký, malformed...)
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+            response.getWriter().write("{\"code\": 401, \"message\": \"Invalid Token\"}");
+            return;
+        }
     }
 }
 

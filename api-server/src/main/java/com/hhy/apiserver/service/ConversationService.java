@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,19 +67,18 @@ public class ConversationService {
             isFriend = true;
         }
 
-        // --- THÊM PARTICIPANTS VỚI STATUS TƯƠNG ỨNG ---
+        // --- THÊM PARTICIPANTS ---
+        // Lưu ý: Sửa hàm addParticipant để nó TRẢ VỀ đối tượng Participant vừa tạo
+        Participant p1 = addParticipant(savedConv, currentUser, Participant.Role.member, Participant.ConversationStatus.active);
 
-        // 1. Người tạo (CurrentUser): Luôn luôn là ACTIVE (để hiện trong Inbox mình còn chat tiếp)
-        addParticipant(savedConv, currentUser, Participant.Role.member, Participant.ConversationStatus.active);
-
-        // 2. Người nhận (TargetUser):
-        // - Nếu là bạn bè: ACTIVE (Vào thẳng Inbox)
-        // - Nếu là người lạ: PENDING (Vào tin nhắn chờ)
         Participant.ConversationStatus targetStatus = isFriend
                 ? Participant.ConversationStatus.active
                 : Participant.ConversationStatus.pending;
 
-        addParticipant(savedConv, targetUser, Participant.Role.member, targetStatus);
+        Participant p2 = addParticipant(savedConv, targetUser, Participant.Role.member, targetStatus);
+
+        // ⚠️ QUAN TRỌNG: Gán danh sách participants vào conversation để map không bị null
+        savedConv.setParticipants(Set.of(p1, p2));
 
         return mapToConversationDTO(savedConv, currentUser.getUserId());
     }
@@ -174,18 +174,17 @@ public class ConversationService {
 
     // --- Helper Methods ---
 
-    private void addParticipant(Conversation c, User u, Participant.Role role, Participant.ConversationStatus status) {
+    private Participant addParticipant(Conversation c, User u, Participant.Role role, Participant.ConversationStatus status) {
         Participant p = new Participant();
         p.setConversation(c);
         p.setUser(u);
         p.setUserId(u.getUserId());
         p.setConversationId(c.getConversationId());
         p.setRole(role);
-
-        p.setStatus(status); // Set status theo tham số truyền vào
-
+        p.setStatus(status);
         p.setJoinedAt(new Date());
-        participantRepository.save(p);
+
+        return participantRepository.save(p); // Return
     }
     // Hàm quan trọng: Chuyển Entity -> DTO và tính toán tên hiển thị
     private ConversationDTO mapToConversationDTO(Conversation c, Long currentUserId) {
@@ -206,8 +205,13 @@ public class ConversationService {
 
             if (other.isPresent()) {
                 User u = other.get().getUser();
-                dto.setDisplayName(u.getUsername()); // Hoặc fullName
+                dto.setDisplayName(u.getUsername());
                 dto.setDisplayAvatarUrl(u.getAvatarUrl());
+                // ✅ MAP DỮ LIỆU ONLINE/LAST SEEN TỪ USER SANG DTO
+                if (u.getOnlineStatus() != null) {
+                    dto.setOnlineStatus(u.getOnlineStatus().toString());
+                }
+                dto.setLastSeen(u.getLastSeen());
             } else {
                 dto.setDisplayName("Unknown User");
             }

@@ -1,15 +1,16 @@
 package com.hhy.apiserver.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
+@EqualsAndHashCode(exclude = {"participants", "messages", "lastMessage"})
 @Table(name = "conversations")
 public class Conversation {
     @Id

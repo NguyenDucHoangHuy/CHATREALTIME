@@ -28,5 +28,6 @@ public class SocketMessage {
         private String content;        // Nội dung tin nhắn (hoặc URL ảnh)
         private String messageType;    // TEXT, IMAGE, FILE
         private Long messageId;        // Dùng cho hành động MARK_READ
+        private Long senderId;
     }
 }

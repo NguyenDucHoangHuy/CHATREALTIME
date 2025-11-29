@@ -1,15 +1,16 @@
 package com.hhy.apiserver.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.Date;
 
-@Data
-@NoArgsConstructor
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(exclude = {"user", "conversation"}) // Loại bỏ User và Conversation
 @Table(name = "participants")
 // Dùng IdClass cho khóa chính 2 cột
 @IdClass(Participant.ParticipantId.class)

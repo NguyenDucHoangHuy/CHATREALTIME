@@ -28,8 +28,6 @@ public class ChatServerApplication {
             return; // Dừng server nếu không có DB
         }
 
-        System.out.println("SECRET IN CHAT SERVER = " + JwtHelper.SECRET_KEY);
-
         // 2. Tạo Thread Pool (Quản lý luồng thông minh)
         // newCachedThreadPool: Tự động tạo luồng mới khi cần và tái sử dụng lại khi rảnh.
         ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -59,3 +57,40 @@ public class ChatServerApplication {
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+//✅ 2. newCachedThreadPool() là gì?
+//
+//Nó là Thread Pool có đặc điểm:
+//
+//        ✔ Không giới hạn số lượng thread (unbounded pool)
+//
+//Khi có client mới → nó tạo thread mới ngay lập tức.
+//
+//✔ Nếu một thread rảnh > 60 giây → nó bị shutdown
+//
+//→ Dọn dẹp thread không còn dùng
+//→ Giảm tốn RAM
+//
+//✔ Tái sử dụng lại thread cũ nếu có thể
+//
+//→ Không phải tạo thread mới (tạo thread tốn tài nguyên)
+//
+//✔ Rất phù hợp cho ứng dụng có số lượng kết nối không ổn định
+//
+//WebSocket chat server của bạn thường:
+//
+//Có lúc nhiều users vào
+//
+//Có lúc ít
+//
+//Kết nối sống lâu nhưng đôi khi mất
