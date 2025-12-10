@@ -212,7 +212,9 @@ public class WsClientHandler implements Runnable {
 
         Long messageId = messageDAO.saveMessage(this.currentUserId, conversationId, content, type);
         if (messageId != null) {
+
             List<Long> members = messageDAO.getConversationMembers(conversationId);
+            MessageDAO.UserBasicInfo senderInfo = messageDAO.getUserInfo(this.currentUserId);
 
             // Phản hồi lại cấu trúc JSON
             SocketMessage response = new SocketMessage();
@@ -224,6 +226,9 @@ public class WsClientHandler implements Runnable {
             payload.setMessageType(type);
 
             payload.setSenderId(this.currentUserId);
+            payload.setSenderName(senderInfo.name);
+            payload.setSenderAvatar(senderInfo.avatar);
+
 
             response.setData(payload);
 

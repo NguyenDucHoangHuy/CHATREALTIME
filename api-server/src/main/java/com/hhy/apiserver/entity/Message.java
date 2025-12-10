@@ -46,7 +46,8 @@ public class Message {
     public enum MessageType {
         text,
         image,
-        file
+        file,
+        audio
     }
 
     // --- Callbacks ---

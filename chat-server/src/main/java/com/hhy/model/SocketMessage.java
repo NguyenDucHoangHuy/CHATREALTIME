@@ -29,5 +29,7 @@ public class SocketMessage {
         private String messageType;    // TEXT, IMAGE, FILE
         private Long messageId;        // Dùng cho hành động MARK_READ
         private Long senderId;
+        private String senderName;
+        private String senderAvatar;
     }
 }

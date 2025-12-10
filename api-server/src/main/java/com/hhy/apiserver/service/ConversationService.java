@@ -86,10 +86,13 @@ public class ConversationService {
     // 2. Tạo nhóm
     @Transactional
     public ConversationDTO createGroup(User currentUser, CreateGroupRequestDTO request) {
+        String defaultAvatar = "https://ui-avatars.com/api/?background=random&color=fff&size=150&name="
+                + request.getGroupName().replace(" ", "+");
+
         Conversation conversation = new Conversation();
         conversation.setType(Conversation.ConversationType.group);
         conversation.setGroupName(request.getGroupName());
-        conversation.setGroupAvatarUrl("https://via.placeholder.com/150");
+        conversation.setGroupAvatarUrl(defaultAvatar);
         conversation.setCreatedAt(new Date());
 
         Conversation savedConv = conversationRepository.save(conversation);
@@ -222,6 +225,8 @@ public class ConversationService {
             dto.setLastMessageContent(c.getLastMessage().getMessageContent());
             dto.setLastMessageTimestamp(c.getLastMessage().getCreatedAt());
             dto.setLastMessageSenderId(c.getLastMessage().getSender().getUserId());
+            dto.setLastMessageType(c.getLastMessage().getMessageType().toString());
+            dto.setLastMessageSenderName(c.getLastMessage().getSender().getUsername());
         }
 
         return dto;

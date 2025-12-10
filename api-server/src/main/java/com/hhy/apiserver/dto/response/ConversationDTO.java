@@ -27,9 +27,11 @@ public class ConversationDTO {
     private String lastMessageContent;
     private Date lastMessageTimestamp;
     private Long lastMessageSenderId; // Để biết ai nhắn tin cuối cùng (Hiển thị "Bạn: ..." hoặc tên người gửi)
+    private String lastMessageType;
+    private String lastMessageSenderName;
 
     // ✅ THÊM 2 TRƯỜNG NÀY
-    private String onlineStatus; // "online" hoặc "offline"
+    private String onlineStatus; // "online" hoặc "offline" 
     private Date lastSeen;       // Thời điểm offline gần nhất
 
 }

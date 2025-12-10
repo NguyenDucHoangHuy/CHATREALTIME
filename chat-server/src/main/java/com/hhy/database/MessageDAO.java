@@ -109,4 +109,31 @@ public class MessageDAO {
             e.printStackTrace();
         }
     }
+
+
+    // Hàm lấy info người gửi (Tên, Avatar)
+    public UserBasicInfo getUserInfo(Long userId) {
+        String sql = "SELECT user_name, avatar_url FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new UserBasicInfo(rs.getString("user_name"), rs.getString("avatar_url"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new UserBasicInfo("Unknown", null);
+    }
+    // Class con để chứa dữ liệu tạm
+    public static class UserBasicInfo {
+        public String name;
+        public String avatar;
+
+        public UserBasicInfo(String name, String avatar) {
+            this.name = name;
+            this.avatar = avatar;
+        }
+    }
 }
