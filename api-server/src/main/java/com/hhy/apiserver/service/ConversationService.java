@@ -2,7 +2,9 @@ package com.hhy.apiserver.service;
 
 import com.hhy.apiserver.dto.request.conversation.CreateGroupRequestDTO;
 import com.hhy.apiserver.dto.request.conversation.OpenConversationRequestDTO;
+import com.hhy.apiserver.dto.request.conversation.UpdateGroupInfoRequestDTO;
 import com.hhy.apiserver.dto.response.ConversationDTO;
+import com.hhy.apiserver.dto.response.ParticipantDTO;
 import com.hhy.apiserver.entity.Conversation;
 import com.hhy.apiserver.entity.Friendship;
 import com.hhy.apiserver.entity.Participant;
@@ -120,19 +122,6 @@ public class ConversationService {
                 .collect(Collectors.toList());
     }
 
-    // 4. Đổi tên nhóm
-    @Transactional
-    public void renameGroup(Long conversationId, String newName) {
-        Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện"));
-
-        if(conversation.getType() != Conversation.ConversationType.group) {
-            throw new RuntimeException("Không thể đổi tên chat 1-1");
-        }
-
-        conversation.setGroupName(newName);
-        conversationRepository.save(conversation);
-    }
 
     // 5. Xóa (Ẩn) hội thoại
     @Transactional
@@ -170,8 +159,59 @@ public class ConversationService {
         }
     }
 
-    // 8. Từ chối tin nhắn chờ -> Thực ra chính là hàm deleteConversation (số 5) bạn đã có.
-    // Khi xóa participant, cuộc trò chuyện sẽ biến mất khỏi danh sách.
+    // 9. Lấy chi tiết cuộc trò chuyện (Bao gồm cả thành viên)
+    public ConversationDTO getConversationDetails(User currentUser, Long conversationId) {
+        // 1. Tìm cuộc hội thoại
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND)); // Nhớ tạo ErrorCode này nếu chưa có
+
+        // 2. Bảo mật: Kiểm tra xem user hiện tại có phải là thành viên không
+        // (Nếu không phải thành viên thì không được xem)
+        boolean isMember = participantRepository.findByUserIdAndConversationId(currentUser.getUserId(), conversationId).isPresent();
+        if (!isMember) {
+            throw new RuntimeException("Bạn không có quyền xem cuộc trò chuyện này");
+        }
+
+        // 3. Map sang DTO cơ bản
+        ConversationDTO dto = mapToConversationDTO(conversation, currentUser.getUserId());
+
+        // 4. Map thêm danh sách thành viên (Chỉ lấy những người Active)
+        List<ParticipantDTO> participants = conversation.getParticipants().stream()
+                .filter(p -> p.getStatus() == Participant.ConversationStatus.active)
+                .map(ParticipantDTO::fromParticipant)
+                .collect(Collectors.toList());
+
+        dto.setParticipants(participants);
+
+        return dto;
+    }
+
+    // 10. Cập nhật thông tin nhóm (Tên và Ảnh)
+    @Transactional
+    public ConversationDTO updateGroupInfo(Long conversationId, UpdateGroupInfoRequestDTO request) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện"));
+
+        if (conversation.getType() != Conversation.ConversationType.group) {
+            throw new RuntimeException("Chỉ có thể cập nhật thông tin cho nhóm");
+        }
+
+        // Cập nhật Tên (nếu có gửi lên)
+        if (request.getGroupName() != null && !request.getGroupName().trim().isEmpty()) {
+            conversation.setGroupName(request.getGroupName());
+        }
+
+        // Cập nhật Ảnh (nếu có gửi lên)
+        if (request.getGroupAvatarUrl() != null && !request.getGroupAvatarUrl().trim().isEmpty()) {
+            conversation.setGroupAvatarUrl(request.getGroupAvatarUrl());
+        }
+
+        Conversation saved = conversationRepository.save(conversation);
+
+        // Trả về DTO để Frontend cập nhật lại giao diện ngay lập tức
+        // (Lưu ý: Chỗ này truyền tạm ID admin hoặc ID bất kỳ vì mapToConversationDTO của Group không phụ thuộc ID user)
+        return mapToConversationDTO(saved, null);
+    }
 
 
 
@@ -210,6 +250,7 @@ public class ConversationService {
                 User u = other.get().getUser();
                 dto.setDisplayName(u.getUsername());
                 dto.setDisplayAvatarUrl(u.getAvatarUrl());
+                dto.setOtherUserId(u.getUserId());
                 // ✅ MAP DỮ LIỆU ONLINE/LAST SEEN TỪ USER SANG DTO
                 if (u.getOnlineStatus() != null) {
                     dto.setOnlineStatus(u.getOnlineStatus().toString());

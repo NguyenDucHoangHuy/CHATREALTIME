@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,4 +36,8 @@ public class ConversationDTO {
     private String onlineStatus; // "online" hoặc "offline" 
     private Date lastSeen;       // Thời điểm offline gần nhất
 
+    // Danh sách thành viên (Chỉ cần thiết khi xem chi tiết, ở list bên ngoài có thể để null)
+    private List<ParticipantDTO> participants;
+
+    private Long otherUserId; // ID người mình đang chat cùng (nếu là 1-1)
 }

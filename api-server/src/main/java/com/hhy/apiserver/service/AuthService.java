@@ -17,6 +17,8 @@ import com.hhy.apiserver.respository.UserRepository;
 import com.hhy.apiserver.security.JwtService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +32,7 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     // Tiêm (Inject) tất cả các "công cụ" chúng ta đã tạo
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -152,6 +155,7 @@ public class AuthService {
 
         // 4. Tạo Access Token MỚI
         String newAccessToken = jwtService.generateAccessToken(user);
+        log.info("Đã refresh tạo accessToken mới rồi");
 
         return new RefreshTokenResponseDTO(newAccessToken);
     }

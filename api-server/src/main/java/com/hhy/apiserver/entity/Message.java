@@ -47,7 +47,9 @@ public class Message {
         text,
         image,
         file,
-        audio
+        audio,
+        video_call,
+        voice_call
     }
 
     // --- Callbacks ---

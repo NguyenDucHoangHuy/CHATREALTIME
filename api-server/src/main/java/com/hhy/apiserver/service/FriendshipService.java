@@ -3,6 +3,7 @@ package com.hhy.apiserver.service;
 import com.hhy.apiserver.dto.request.friendship.FriendIdRequestDTO;
 import com.hhy.apiserver.dto.response.FriendRequestDTO;
 import com.hhy.apiserver.dto.response.UserDTO;
+import com.hhy.apiserver.dto.response.UserSuggestionDTO;
 import com.hhy.apiserver.entity.Friendship;
 import com.hhy.apiserver.entity.User;
 import com.hhy.apiserver.exception.AppException;
@@ -141,6 +142,22 @@ public class FriendshipService {
 
         return requests.stream()
                 .map(f -> userMapper.toUserDTO(f.getAddressee()))
+                .collect(Collectors.toList());
+    }
+
+
+    // 9. Gợi ý kết bạn (Bạn chung)
+    public List<UserSuggestionDTO> getFriendSuggestions(User currentUser) {
+        List<FriendshipRepository.UserSuggestionProjection> suggestions =
+                friendshipRepository.findFriendSuggestions(currentUser.getUserId());
+
+        return suggestions.stream()
+                .map(projection -> new UserSuggestionDTO(
+                        projection.getUserId(),
+                        projection.getUsername(),
+                        projection.getAvatarUrl(),
+                        projection.getMutualFriendsCount()
+                ))
                 .collect(Collectors.toList());
     }
 

@@ -17,7 +17,9 @@ public enum ErrorCode {
     UNAUTHORIZED(2004, "Bạn không có quyền truy cập", HttpStatus.FORBIDDEN),
 
     // --- Lỗi Người dùng (User) 4xxx ---
-    USER_NOT_FOUND(4004, "Không tìm thấy người dùng",HttpStatus.NOT_FOUND);
+    USER_NOT_FOUND(4004, "Không tìm thấy người dùng",HttpStatus.NOT_FOUND),
+
+    CONVERSATION_NOT_FOUND(6001, "Không tìm thấy người dùng", HttpStatus.BAD_REQUEST);
 
     // --- Lỗi Bạn bè (Friendship) 5xxx ---
     // (Bạn có thể thêm sau, ví dụ: ALREADY_FRIENDS, REQUEST_PENDING...)

@@ -2,7 +2,7 @@ package com.hhy.apiserver.controller;
 
 import com.hhy.apiserver.dto.request.conversation.CreateGroupRequestDTO;
 import com.hhy.apiserver.dto.request.conversation.OpenConversationRequestDTO;
-import com.hhy.apiserver.dto.request.conversation.RenameConversationRequestDTO;
+import com.hhy.apiserver.dto.request.conversation.UpdateGroupInfoRequestDTO;
 import com.hhy.apiserver.dto.response.ApiResponse;
 import com.hhy.apiserver.dto.response.ConversationDTO;
 import com.hhy.apiserver.entity.User;
@@ -56,19 +56,6 @@ public class ConversationController {
                 .build());
     }
 
-    // 4. Đổi tên nhóm
-    @PutMapping("/{conversationId}/rename")
-    public ResponseEntity<ApiResponse<String>> renameGroup(
-            @PathVariable Long conversationId,
-            @RequestBody RenameConversationRequestDTO request) {
-
-        conversationService.renameGroup(conversationId, request.getNewName());
-
-        return ResponseEntity.ok(ApiResponse.<String>builder()
-                .code(1000).message("Đổi tên thành công")
-                .build());
-    }
-
     // 5. Xóa (Ẩn) hội thoại
     @DeleteMapping("/{conversationId}")
     public ResponseEntity<ApiResponse<String>> deleteConversation(
@@ -103,6 +90,32 @@ public class ConversationController {
 
         return ResponseEntity.ok(ApiResponse.<String>builder()
                 .code(1000).message("Đã chấp nhận tin nhắn")
+                .build());
+    }
+
+    // 8. Lấy chi tiết cuộc trò chuyện (Info)
+    @GetMapping("/{conversationId}")
+    public ResponseEntity<ApiResponse<ConversationDTO>> getDetails(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long conversationId) {
+
+        return ResponseEntity.ok(ApiResponse.<ConversationDTO>builder()
+                .code(1000)
+                .message("Lấy thông tin thành công")
+                .result(conversationService.getConversationDetails(currentUser, conversationId))
+                .build());
+    }
+
+    // 9. Cập nhật thông tin nhóm (Tên, Ảnh) - Thay thế cho renameGroup cũ
+    @PutMapping("/{conversationId}")
+    public ResponseEntity<ApiResponse<ConversationDTO>> updateGroupInfo(
+            @PathVariable Long conversationId,
+            @RequestBody UpdateGroupInfoRequestDTO request) {
+
+        return ResponseEntity.ok(ApiResponse.<ConversationDTO>builder()
+                .code(1000)
+                .message("Cập nhật nhóm thành công")
+                .result(conversationService.updateGroupInfo(conversationId, request))
                 .build());
     }
 }

@@ -4,6 +4,7 @@ import com.hhy.apiserver.dto.request.friendship.FriendIdRequestDTO;
 import com.hhy.apiserver.dto.response.ApiResponse;
 import com.hhy.apiserver.dto.response.FriendRequestDTO;
 import com.hhy.apiserver.dto.response.UserDTO;
+import com.hhy.apiserver.dto.response.UserSuggestionDTO;
 import com.hhy.apiserver.entity.User;
 import com.hhy.apiserver.service.FriendshipService;
 import lombok.RequiredArgsConstructor;
@@ -100,6 +101,19 @@ public class FriendshipController {
                 .code(1000)
                 .message("Lấy danh sách lời mời đã gửi thành công")
                 .result(friendshipService.getOutgoingRequests(currentUser))
+                .build());
+    }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<ApiResponse<List<UserSuggestionDTO>>> getSuggestions(
+            @AuthenticationPrincipal User currentUser
+    ) {
+        List<UserSuggestionDTO> result = friendshipService.getFriendSuggestions(currentUser);
+
+        return ResponseEntity.ok(ApiResponse.<List<UserSuggestionDTO>>builder()
+                .code(1000)
+                .message("Lấy danh sách gợi ý thành công")
+                .result(result)
                 .build());
     }
 }

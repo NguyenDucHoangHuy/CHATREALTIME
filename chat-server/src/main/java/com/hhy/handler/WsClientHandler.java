@@ -196,11 +196,24 @@ public class WsClientHandler implements Runnable {
     }
 
     private void processMessage(SocketMessage msg) {
+        SocketMessage.ActionType type = msg.getType();
         // Logic gửi tin nhắn giữ nguyên như cũ
-        if (msg.getType() == SocketMessage.ActionType.SEND_CHAT) {
+        if (type == SocketMessage.ActionType.SEND_CHAT) {
             handleSendChat(msg);
-        } else if (msg.getType() == SocketMessage.ActionType.MARK_READ) {
+        } else if (type == SocketMessage.ActionType.MARK_READ) {
             handleMarkRead(msg);
+        }
+        // --- Logic WebRTC Signaling (MỚI) ---
+        // Các loại này có chung logic: Chuyển tiếp (Forwarding)
+        else if (type == SocketMessage.ActionType.CALL_OFFER ||
+                type == SocketMessage.ActionType.CALL_ANSWER ||
+                type == SocketMessage.ActionType.ICE_CANDIDATE ||
+                type == SocketMessage.ActionType.CALL_REJECT ||
+                type == SocketMessage.ActionType.CALL_END ||
+                type == SocketMessage.ActionType.CAMERA_TOGGLE)
+        {
+
+            handleSignaling(msg);
         }
     }
 
@@ -226,7 +239,7 @@ public class WsClientHandler implements Runnable {
             payload.setMessageType(type);
 
             payload.setSenderId(this.currentUserId);
-            payload.setSenderName(senderInfo.name);
+            payload.setSenderUsername(senderInfo.name);
             payload.setSenderAvatar(senderInfo.avatar);
 
 
@@ -264,6 +277,58 @@ public class WsClientHandler implements Runnable {
         }
     }
 
+
+    /**
+     * Hàm xử lý tín hiệu WebRTC: Chỉ chuyển tiếp, không lưu DB
+     */
+    private void handleSignaling(SocketMessage msg) {
+        Long targetUserId = msg.getData().getTargetUserId();
+
+        // Validation cơ bản
+        if (targetUserId == null) return;
+
+        // Tìm kết nối của người nhận (B)
+        WsClientHandler targetClient = (WsClientHandler) ClientManager.getClient(targetUserId);
+
+        if (targetClient != null) {
+            // Trước khi gửi đi, ta cần điền thông tin người gửi (A) vào payload
+            // để B biết ai đang gọi mình
+            msg.getData().setSenderId(this.currentUserId);
+
+            // (Tuỳ chọn) Có thể lấy thêm tên/avatar từ DB nếu muốn hiển thị đẹp
+            MessageDAO.UserBasicInfo senderInfo = messageDAO.getUserInfo(this.currentUserId);
+            msg.getData().setSenderUsername(senderInfo.name);
+            msg.getData().setSenderAvatar(senderInfo.avatar);
+
+            // Chuyển object thành JSON
+            String jsonForward = gson.toJson(msg);
+
+            // Gửi cho B
+            targetClient.sendFrame(jsonForward);
+
+            System.out.println("⚡ Signaling [" + msg.getType() + "] từ " + currentUserId + " -> " + targetUserId);
+        } else {
+            // Nếu B không online
+            // Với cuộc gọi Video, nếu đối phương offline thì thường ta báo lỗi ngay cho A
+            if (msg.getType() == SocketMessage.ActionType.CALL_OFFER) {
+                sendUserOfflineNotification(targetUserId);
+            }
+        }
+    }
+
+    // Báo cho A biết là B đang offline
+    private void sendUserOfflineNotification(Long targetId) {
+        SocketMessage errorMsg = new SocketMessage();
+        errorMsg.setType(SocketMessage.ActionType.CALL_REJECT); // Tái sử dụng type này hoặc tạo type CALL_OFFLINE
+
+        SocketMessage.MessagePayload payload = new SocketMessage.MessagePayload();
+        payload.setContent("User is offline");
+        payload.setSenderId(targetId); // Giả vờ như B gửi về
+
+        errorMsg.setData(payload);
+        this.sendFrame(gson.toJson(errorMsg));
+    }
+
     private void disconnect() {
         if (currentUserId != null) {
             ClientManager.removeClient(currentUserId);
@@ -272,4 +337,5 @@ public class WsClientHandler implements Runnable {
         }
         try { socket.close(); } catch (IOException e) {}
     }
+
 }
